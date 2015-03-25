@@ -2,11 +2,9 @@
 header('Content-type: text/html; charset=utf-8');
 //error_reporting(E_ALL);
 
-session_start();
+$explanation = array();
 if (isset($_COOKIE['explanation'])) {
-    echo 'true';
-    unset($_SESSION['explanation']);
-    $_SESSION['explanation'] = unserialize($_COOKIE['explanation']);
+    $explanation = unserialize($_COOKIE['explanation']);
 }
 //
 // Функции вывода списков городов, метро, категорий
@@ -58,40 +56,30 @@ function show_category_block($category = '') {
 //
 function processingQuery ($array) {
     foreach ($array as $key => &$value) {
-        $query[$key] = trim($value, ' .,\|/*-+');
+        $query[$key] = trim(htmlspecialchars($value), ' .,\|/*-+');
     }
-    $query['seller_name'] = htmlspecialchars($query['seller_name']);
-    $query['email'] = htmlspecialchars($query['email']);
-    $query['phone'] = htmlspecialchars($query['phone']);
-    $query['title'] = htmlspecialchars($query['title']);
-    $query['description'] = htmlspecialchars($query['description']);
     $query['price'] = (float)$query['price'];
     return $query;
 }
 
 function addExplanation($id, $array) {
+    global $explanation;
     if ($id == '') {
-        $_SESSION['explanation'][] = $array;
+        $explanation[] = $array;
     } else {
-        $_SESSION['explanation'][$id] = $array;
+        $explanation[$id] = $array;
     }
-    if (isset($_COOKIE['explanation'])) {
-        setcookie('explanation', '', time()-3600);
-    }
-    setcookie('explanation', serialize($_SESSION['explanation']), time()+3600*24*7);
-    
+    setcookie('explanation', serialize($explanation), time()+3600*24*7);
 }
 
 function deleteExplanation($name) {
-    unset($_SESSION['explanation'][$name]);
-    if (isset($_COOKIE['explanation'])) {
-        setcookie('explanation', '', time()-3600);
-    }
-    setcookie('explanation', serialize($_SESSION['explanation']), time()+3600*24*7);
+    global $explanation;
+    unset($explanation[$name]);
+    setcookie('explanation', serialize($explanation), time()+3600*24*7);
 }
 
-function showFormExplanation($show) {
-    $name = (isset($_SESSION['explanation'][$show])) ? $_SESSION['explanation'][$show] :
+function showFormExplanation($show, $explanation) {
+    $name = (isset($explanation[$show])) ? $explanation[$show] :
             array('private' => '0', 'seller_name' => '', 'email' => '', 'phone' => '',
         'location_id' => '', 'category_id' => '', 'title' => '', 'description' => '',
         'price' => '0');
@@ -154,9 +142,9 @@ function showFormExplanation($show) {
                 <div>
                     <input type="submit" name="button_add" value="<?php
                                                     if ($show == '') {
-                                                        echo 'Подать объявление" formaction="index.php';
+                                                        echo 'Подать объявление" formaction="index7_1.php';
                                                     } else {
-                                                        echo 'Изменить объявление" formaction="index.php?id='.$show.'';
+                                                        echo 'Изменить объявление" formaction="index7_1.php?id='.$show.'';
                                                     }
                                                 ?>">
                 </div>
@@ -166,13 +154,13 @@ function showFormExplanation($show) {
             if ($show !== '') {
                 echo '<form method="get">
                         <div>
-                        <button value="index.php">Отмена</button>
+                        <button value="index7_1.php">Отмена</button>
                         </div>
                     </form>';
             }
 }
 
-function printExplanations() {
+function printExplanations($array) {
     echo "<h2>Объявления</h2>";
         echo "<table width = 100%>";
         echo "<tr>";
@@ -181,13 +169,13 @@ function printExplanations() {
         echo "<th bgcolor='silver'>Имя</th>";
         echo "<th bgcolor='silver'>Удалить</th>";
         echo "</tr>";
-        if ($_SESSION) {
-            foreach ($_SESSION['explanation'] as $key => &$value) {
+        if ($array) {
+            foreach ($array as $key => &$value) {
                 echo "<tr align = 'center'>";
-                echo "<td><a href='index.php?show=" . $key . "'>" . $value['title'] . "</td>";
+                echo "<td><a href='index7_1.php?show=" . $key . "'>" . $value['title'] . "</td>";
                 echo "<td>" . $value['price'] . "</td>";
                 echo "<td>" . $value['seller_name'] . "</td>";
-                echo "<td><a href='index.php?delete=" . $key . "'>Удалить</a></td>";
+                echo "<td><a href='index7_1.php?delete=" . $key . "'>Удалить</a></td>";
                 echo "</tr>";
             }
             echo "</table>";
@@ -209,13 +197,8 @@ function printExplanations() {
             addExplanation($id, $query);
         }
         
-        showFormExplanation($show);
-        printExplanations();
-        
-        
-//      unset ($_SESSION['explanation']);
-//      print_r($_SESSION);
-//      session_destroy();
+        showFormExplanation($show, $explanation);
+        printExplanations($explanation);
         ?>
             
     </body>

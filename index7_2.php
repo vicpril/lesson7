@@ -1,24 +1,20 @@
 <?php
 header('Content-type: text/html; charset=utf-8');
-//error_reporting(E_ALL);
+error_reporting(E_ERROR | E_WARNING | E_PARSE);
 
-session_start();
-
-    //
-    // Чтение объявлений из файла
-    //
+$explanation = array();
 $filename = 'explanation.php';
-if (!$fileExp = fopen($filename, 'a+')) {
-    echo "Не могу открыть файл 'explanations'"; exit;
-}
-if (filesize($filename) > 0) {
-    $_SESSION['explanation'] = unserialize(fread($fileExp, filesize($filename)));
-}
-fclose($fileExp);
 
-    //
-    // Функции вывода списков городов, метро, категорий
-    //
+if (file_exists($filename)) {
+    if(!$explanation = unserialize(file_get_contents($filename))){
+        echo 'Ошибка: неверный формат файла '.$filename;
+        exit;
+    }
+}
+
+//
+// Функции вывода списков городов, метро, категорий
+//
 function show_city_block($gorod, $show) {
     if ($show == '' && $gorod == '') {
         $gorod = 641780;
@@ -61,47 +57,35 @@ function show_category_block($category = '') {
     <?php
 }
 
-    //
-    // Функции добавления удвления и вывода объявлений
-    //
+//
+// Функции добавления удвления и вывода объявлений
+//
 function processingQuery ($array) {
     foreach ($array as $key => &$value) {
-        $query[$key] = trim($value, ' .,\|/*-+');
+        $query[$key] = trim(htmlspecialchars($value), ' .,\|/*-+');
     }
-    $query['seller_name'] = htmlspecialchars($query['seller_name']);
-    $query['email'] = htmlspecialchars($query['email']);
-    $query['phone'] = htmlspecialchars($query['phone']);
-    $query['title'] = htmlspecialchars($query['title']);
-    $query['description'] = htmlspecialchars($query['description']);
     $query['price'] = (float)$query['price'];
     return $query;
 }
 
 function addExplanation($id, $array, $filename = 'explanation.php') {
+    global $explanation;
     if ($id == '') {
-        $_SESSION['explanation'][] = $array;
+        $explanation[] = $array;
     } else {
-        $_SESSION['explanation'][$id] = $array;
+        $explanation[$id] = $array;
     }
-    
-    if (!$fileExp = fopen($filename, 'w')) {
-        echo "Не могу открыть файл 'explanations'"; exit;
-    }
-    fwrite($fileExp, serialize($_SESSION['explanation']));
-    fclose($fileExp);
+    file_put_contents($filename, serialize($explanation));
 }
 
 function deleteExplanation($name, $filename = 'explanation.php') {
-    unset($_SESSION['explanation'][$name]);
-    if (!$fileExp = fopen($filename, 'w')) {
-        echo "Не могу открыть файл 'explanations'"; exit;
-    }
-    fwrite($fileExp, serialize($_SESSION['explanation']));
-    fclose($fileExp);
+    global $explanation;
+    unset($explanation[$name]);
+    file_put_contents($filename, serialize($explanation));
 }
 
-function showFormExplanation($show) {
-    $name = (isset($_SESSION['explanation'][$show])) ? $_SESSION['explanation'][$show] :
+function showFormExplanation($show, $explanation) {
+    $name = (isset($explanation[$show])) ? $explanation[$show] :
             array('private' => '0', 'seller_name' => '', 'email' => '', 'phone' => '',
         'location_id' => '', 'category_id' => '', 'title' => '', 'description' => '',
         'price' => '0');
@@ -164,9 +148,9 @@ function showFormExplanation($show) {
                 <div>
                     <input type="submit" name="button_add" value="<?php
                                                     if ($show == '') {
-                                                        echo 'Подать объявление" formaction="index.php';
+                                                        echo 'Подать объявление" formaction="index7_2.php';
                                                     } else {
-                                                        echo 'Изменить объявление" formaction="index.php?id='.$show.'';
+                                                        echo 'Изменить объявление" formaction="index7_2.php?id='.$show.'';
                                                     }
                                                 ?>">
                 </div>
@@ -176,13 +160,13 @@ function showFormExplanation($show) {
             if ($show !== '') {
                 echo '<form method="get">
                         <div>
-                        <button value="index.php">Отмена</button>
+                        <button value="index7_2.php">Отмена</button>
                         </div>
                     </form>';
             }
 }
 
-function printExplanations() {
+function printExplanations($array) {
     echo "<h2>Объявления</h2>";
         echo "<table width = 100%>";
         echo "<tr>";
@@ -191,22 +175,22 @@ function printExplanations() {
         echo "<th bgcolor='silver'>Имя</th>";
         echo "<th bgcolor='silver'>Удалить</th>";
         echo "</tr>";
-        if ($_SESSION) {
-            foreach ($_SESSION['explanation'] as $key => &$value) {
+        if ($array) {
+            foreach ($array as $key => &$value) {
                 echo "<tr align = 'center'>";
-                echo "<td><a href='index.php?show=" . $key . "'>" . $value['title'] . "</td>";
+                echo "<td><a href='index7_2.php?show=" . $key . "'>" . $value['title'] . "</td>";
                 echo "<td>" . $value['price'] . "</td>";
                 echo "<td>" . $value['seller_name'] . "</td>";
-                echo "<td><a href='index.php?delete=" . $key . "'>Удалить</a></td>";
+                echo "<td><a href='index7_2.php?delete=" . $key . "'>Удалить</a></td>";
                 echo "</tr>";
             }
             echo "</table>";
         }
 }
 
-    //
-    // Главный блок: обработка запросов, вывод формы, вывод объявлений
-    //
+//
+// Главный блок: обработка запросов, вывод формы, вывод объявлений
+//
         $id = (isset($_GET['id'])) ? $_GET['id'] : '';
         $show = (isset($_GET['show'])) ? $_GET['show'] : '';
        
@@ -219,10 +203,8 @@ function printExplanations() {
             addExplanation($id, $query);
         }
         
-        showFormExplanation($show);
-        printExplanations();
-        
-//      session_destroy();
+        showFormExplanation($show, $explanation);
+        printExplanations($explanation);
         ?>
             
     </body>
