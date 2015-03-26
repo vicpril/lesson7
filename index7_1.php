@@ -62,8 +62,7 @@ function processingQuery ($array) {
     return $query;
 }
 
-function addExplanation($id, $array) {
-    global $explanation;
+function addExplanation(&$explanation, $id, $array) {
     if ($id == '') {
         $explanation[] = $array;
     } else {
@@ -72,8 +71,7 @@ function addExplanation($id, $array) {
     setcookie('explanation', serialize($explanation), time()+3600*24*7);
 }
 
-function deleteExplanation($name) {
-    global $explanation;
+function deleteExplanation(&$explanation, $name) {
     unset($explanation[$name]);
     setcookie('explanation', serialize($explanation), time()+3600*24*7);
 }
@@ -189,12 +187,12 @@ function printExplanations($array) {
         $show = (isset($_GET['show'])) ? $_GET['show'] : '';
        
         if (isset($_GET['delete'])) {
-            deleteExplanation($_GET['delete']);
+            deleteExplanation($explanation, $_GET['delete']);
         }
 
         if (isset($_POST['button_add'])) {
             $query = processingQuery($_POST);
-            addExplanation($id, $query);
+            addExplanation($explanation, $id, $query);
         }
         
         showFormExplanation($show, $explanation);

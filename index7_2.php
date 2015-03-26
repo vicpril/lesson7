@@ -7,8 +7,7 @@ $filename = 'explanation.php';
 
 if (file_exists($filename)) {
     if(!$explanation = unserialize(file_get_contents($filename))){
-        echo 'Ошибка: неверный формат файла '.$filename;
-        exit;
+        exit ('Ошибка: неверный формат файла '.$filename);
     }
 }
 
@@ -68,20 +67,22 @@ function processingQuery ($array) {
     return $query;
 }
 
-function addExplanation($id, $array, $filename = 'explanation.php') {
-    global $explanation;
+function addExplanation(&$explanation, $id, $array, $filename = 'explanation.php') {
     if ($id == '') {
         $explanation[] = $array;
     } else {
         $explanation[$id] = $array;
     }
-    file_put_contents($filename, serialize($explanation));
+    if (!file_put_contents($filename, serialize($explanation))){
+        exit('Ошибка: не удалось записать фаил '.$filename);
+    }
 }
 
-function deleteExplanation($name, $filename = 'explanation.php') {
-    global $explanation;
+function deleteExplanation(&$explanation, $name, $filename = 'explanation.php') {
     unset($explanation[$name]);
-    file_put_contents($filename, serialize($explanation));
+     if (!file_put_contents($filename, serialize($explanation))){
+        exit('Ошибка: не удалось записать фаил '.$filename);
+    }
 }
 
 function showFormExplanation($show, $explanation) {
@@ -195,12 +196,12 @@ function printExplanations($array) {
         $show = (isset($_GET['show'])) ? $_GET['show'] : '';
        
         if (isset($_GET['delete'])) {
-            deleteExplanation($_GET['delete']);
+            deleteExplanation($explanation, $_GET['delete']);
         }
 
         if (isset($_POST['button_add'])) {
             $query = processingQuery($_POST);
-            addExplanation($id, $query);
+            addExplanation($explanation, $id, $query);
         }
         
         showFormExplanation($show, $explanation);
