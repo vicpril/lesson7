@@ -1,14 +1,15 @@
 <?php
 header('Content-type: text/html; charset=utf-8');
-error_reporting(E_ERROR | E_WARNING | E_PARSE);
+error_reporting(E_ALL);
 
 $explanation = array();
 $filename = 'explanation.php';
 
 if (file_exists($filename)) {
-    if(!$explanation = unserialize(file_get_contents($filename))){
+    if(!file_get_contents($filename)){
         exit ('Ошибка: неверный формат файла '.$filename);
     }
+    $explanation = unserialize(file_get_contents($filename));
 }
 
 //
